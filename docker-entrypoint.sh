@@ -96,12 +96,31 @@ if [[ "$1" == apache2* ]] || [ "$1" = 'php-fpm' ]; then
 	fi
 fi
 
+echo $ADMIN_PASS > admin_pass.txt
 
-# rm -rf /var/www/html/wp-content
-rm -f /var/www/html/wp-config
+
+echo $SITE_URL
+
+# Remove the wp-config directory and create a symlink to the wp-config
+if [ ! -f /mnt/efs1/wp-config.php ]; then
+	echo "We should install wordpress"
+	wp config create --dbname=$DB_NAME --dbuser=$DB_USER --dbpass=$DB_PASS --dbhost=$DB_HOST --dbuser=$DB_USER --allow-root
+	wp core install --url=$SITE_URL --title="$SITE_TITLE" --admin_user="$ADMIN_USER" --admin_email="$ADMIN_EMAIL" --prompt=admin_password < admin_pass.txt  --allow-root
+	# wp option update siteurl "https://wordpress.drakeworld.com" --allow-root
+	# wp plugin install ssl-insecure-content-fixer --allow-root
+	# wp plugin activate ssl-insecure-content-fixer --allow-root
+	# wp option add ssl_insecure_content_fixer --format=json < ssl-settings.json --allow-root
+	# mv wp-config.php /mnt/efs1/
+	
+fi
+
 ln -s /mnt/efs1/wp-config.php /var/www/html/wp-config.php
+
+echo "got past installing wordpress"
+
+# If the wp-content directory doesn't exist in the efs filesystem, move the docker-based wp-content directory to the efs filesystem
+# and create a symlink here.
 if [ ! -d /mnt/efs1/wp-content ]; then
-  #mkdir -p /mnt/efs1/wp-content;
   mv /var/www/html/wp-content /mnt/efs1/wp-content
   ln -s /mnt/efs1/wp-content /var/www/html/wp-content
 else
@@ -109,6 +128,7 @@ else
 	ln -s /mnt/efs1/wp-content wp-content
 fi
 
+# If the plugins and themes directories do not exist in the efs filesystem, create them
 if [ ! -d /mnt/efs1/wp-content/themes ]; then
   mkdir -p /mnt/efs1/wp-content/themes;
 fi

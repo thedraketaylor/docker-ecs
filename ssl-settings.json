@@ -1,0 +1,8 @@
+{
+	"fix_level": "capture",
+	"proxy_fix": "HTTP_X_FORWARDED_PROTO",
+	"site_only": 0,
+	"fix_specific": {
+		"woo_https": 1
+		}
+}

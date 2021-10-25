@@ -11,6 +11,7 @@ RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
 	# Ghostscript is required for rendering PDF previews
+	mariadb-client \
 	ghostscript \
 	; \
 	rm -rf /var/lib/apt/lists/*
@@ -142,12 +143,20 @@ RUN set -eux; \
 	chown -R www-data:www-data wp-content; \
 	chmod -R 777 wp-content
 
-#VOLUME /var/www/html
+
+
+# Add wp-cli
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+RUN chmod +x wp-cli.phar
+RUN mv wp-cli.phar /usr/bin/wp
 
 RUN mkdir /mnt/efs1
 
 COPY --chown=www-data:www-data wp-config-docker.php /usr/src/wordpress/
 COPY docker-entrypoint.sh /usr/local/bin/
+
+COPY ssl-settings.json /var/www/html/
+
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
