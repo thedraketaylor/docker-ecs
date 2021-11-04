@@ -98,22 +98,26 @@ fi
 
 echo $ADMIN_PASS > admin_pass.txt
 
+ls -l /mnt/efs1
 
-echo $SITE_URL
 
 # Remove the wp-config directory and create a symlink to the wp-config
 if [ ! -f /mnt/efs1/wp-config.php ]; then
 	echo "We should install wordpress"
 	wp config create --dbname=$DB_NAME --dbuser=$DB_USER --dbpass=$DB_PASS --dbhost=$DB_HOST --dbuser=$DB_USER --allow-root
-	wp core install --url=$SITE_URL --title="$SITE_TITLE" --admin_user="$ADMIN_USER" --admin_email="$ADMIN_EMAIL" --prompt=admin_password < admin_pass.txt  --allow-root
-	# wp option update siteurl "https://wordpress.drakeworld.com" --allow-root
-	# wp plugin install ssl-insecure-content-fixer --allow-root
-	# wp plugin activate ssl-insecure-content-fixer --allow-root
-	# wp option add ssl_insecure_content_fixer --format=json < ssl-settings.json --allow-root
-	# mv wp-config.php /mnt/efs1/
-	
+	if wp core is-installed --allow-root; then
+		echo "skipping installing core"
+	else
+		wp core install --url=$SITE_URL --title="$SITE_TITLE" --admin_user="$ADMIN_USER" --admin_email="$ADMIN_EMAIL" --prompt=admin_password < admin_pass.txt  --allow-root
+		wp option update siteurl "https://$SITE_URL" --allow-root
+		wp plugin install ssl-insecure-content-fixer --allow-root
+		wp plugin activate ssl-insecure-content-fixer --allow-root
+		wp option add ssl_insecure_content_fixer --format=json < ssl-settings.json --allow-root
+		mv wp-config.php /mnt/efs1/
+	fi
 fi
 
+mv /var/www/html/wp-config.php /mnt/efs1/wp-config.php
 ln -s /mnt/efs1/wp-config.php /var/www/html/wp-config.php
 
 echo "got past installing wordpress"
